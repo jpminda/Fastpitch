@@ -10,8 +10,10 @@ output:
   
 ---
 
+[Back](http://jpminda.github.io) to my page
+
 #Background
-I help to coach and manage a U19 fast-pitch (women's competitive softball) team. We play in the [Provincial Women's Softball Association](https://www.pwsaontario.com/) at the Tier II level. I keep the score at every game, track every pitch and every play, and track the stats in a great app called [TeamSnap])(https://www.teamsnap.com/), and the players can see their batting average, runs, how many stolen bases, etc. But it's pretty basic, and 2/3 of the way into the season, and I wanted to give the other coaches something to look at, in terms how each player is performing. 
+I help to coach and manage a U19 fast-pitch (women's competitive softball) team. We play in the [Provincial Women's Softball Association](https://www.pwsaontario.com/) at the Tier II level. I keep the score at every game, track every pitch and every play, and track the stats in a great app called [TeamSnap](https://www.teamsnap.com/), and the players can see their batting average, runs, how many stolen bases, etc. But it's pretty basic, and 2/3 of the way into the season, and I wanted to give the other coaches something to look at, in terms how each player is performing. 
 
 As well, I wanted to try my hand at some new data visualizations that I could put to use for other things. 
 
