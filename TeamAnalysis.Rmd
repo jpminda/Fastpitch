@@ -1,0 +1,125 @@
+---
+title: "Basic Team Stats"
+author: "Paul Minda"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: yes
+    toc_depth: '3'
+    toc_float: yes
+  
+---
+
+#Background
+I help to coach and manage a U19 fast-pitch (women's competitive softball) team. We play in the [Provincial Women's Softball Association](https://www.pwsaontario.com/) at the Tier II level. I keep the score at every game, track every pitch and every play, and track the stats in a great app called [TeamSnap])(https://www.teamsnap.com/), and the players can see their batting average, runs, how many stolen bases, etc. But it's pretty basic, and 2/3 of the way into the season, and I wanted to give the other coaches something to look at, in terms how each player is performing. 
+
+As well, I wanted to try my hand at some new data visualizations that I could put to use for other things. 
+
+So I created a short analysis of the team's statistics for the season. The stats shown are season totals and averages for each player. This analysis includes all games played: tournament and regular season. I don't have an easy way to split things up by game, unless I can export all of the Team Snap stats which does not seem to be an option. I have contacted Team Snap Admin support about this and they said they'd consider addting a feature that would let me export all the stats I've entered
+
+The goal of this analysis is to help the coaches see what is working well and what needs some additional work. The goal was not to point out who is a better player and who is not. This is a team sport. The entire team is greater that the sum of its parts. 
+Of course, I have anonymized all the players for this blog post, though the coaches and players say this report with actual names. 
+
+#Loading Packages
+Well use ggplot for making the plots and ggrepel for moving the names around so they don't cover.
+```{r}
+#install.packages("ggplot2")
+#install.packages("ggrepel")
+#install.packages("readxl")
+library(ggplot2)
+library(ggrepel) #cool package that lets you plot labels in creative way
+library(readxl) #reads in excel
+```
+
+#Loading the Data
+The data are literally copied and pasted from the summary screen in TeamSnap and saved into a exell file and a clumsily make the ones I'm using show up as numeric (which they did anyway). *Note* I forced Hit By Pitch (**HBP**) to be numeric because some girls were not hit, and it reads in a "-" character from the file. Everything else is read in as a number.
+```{r warning=FALSE}
+#df<-read.csv("PlayerData.csv", header= TRUE)
+df<-read_excel("PlayerData.xlsx")
+df$HBP<-as.numeric(df$HBP)
+```
+
+#Batting Average
+The first thing any player wants to look at their batting average and on-base percentage in order to see who is hitting well and who is getting on base.Batting Average (**AVG**) is just the number of Hits (**H**) divided by number of At Bats (**AB**) $$AVG=\frac{H}{AB}$$
+
+The On Base Percentage (**OBP**) takes into account three of the ways that a player can get on base: hit (**H**), a walk (**BB**), and getting hit by a pitch (**HBP**). You can also get on base by an fielder's error like an overthrow (scored as Reached on Error, **ROE**) and by a fielder's choice (**FC**), when they tag or throw out an advancing runner instead of the batter. These are not included in OBP (though I do track those also). 
+The formula for OBP is: 
+$$OBP=\frac{(H+BB+HBP)}{(AB+BB+HPB+SF)}$$
+
+The two statistics are related but not exactly the same. A higher number is always better. The plot shows players ranked by AVG, and the height of the bar corresponds to AVG. The colour of the bar corresponds to OBP: the lighter the bar the better the OBP.As you can see, there's a range, with Player JA, one of our pitchers, is having a tough time whereas Player VT is the Catcher and she's having a great year.
+
+
+```{r}
+ggplot(df,aes(x=reorder(Player, AVG), y=AVG, fill=OBP))+
+  geom_bar(position = "dodge",color="black", stat="identity")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  ggtitle("Batting Avg and On Base Percentage")+
+  xlab("")+
+  ylab("AVG")
+```
+
+
+
+#Runs and RBIs
+Depending on a player's position in the lineup, she may have more opportunities to score runs. Players at the top of the order will have more at bats and more hitting support behind them which will translate into more chances to score. 
+
+
+
+The **RBI** is the number of runs that a player has batted in. Players in the middle of the lineup often do well here, as they are more likely to have runners on base when they are at bat. Also, very strong hitters in this age division will tend to have higher RBIs. The plot shown here is like the AVG by OBP plot above, but this time players are ranked by the total number of runs they've scored and the height of the bar corresponds to that number. The colour of the bar corresponds to RBI, the lighter the bar the more RBIs that player has.
+
+
+```{r}
+ggplot(df,aes(x=reorder(Player, R), y=R, fill=RBI))+
+  geom_bar(position = "dodge",color="black", stat="identity")+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  ggtitle("Runs and RBIs")+
+  xlab("")+
+  ylab("Runs Scored") 
+```
+
+
+#Getting on base
+An important thing to know is whether or not a player's appearance at the plate will result in getting on base. A player who often hits singles is valuable, but so is a player who tends to draw a walk by being patient with her swings. Either way, the player is getting on base. 
+
+The analysis below shows the relationship between the number of at bats (**AB**) and the number of times the player got on base. I defined a new, temporary stat called Gets on Base (**GOB**) as Total hits (**TH**), Walks (**BB**) and **HBP**. It's basically OBP without the divisor $$GOB=TH+BB+HBP$$.
+
+```{r}
+df$GOB<-df$TH+df$BB+df$HBP
+ggplot(df,aes(x=AB, y=TH, label=Player)) +
+  geom_smooth(method = "lm", se = FALSE)+
+  geom_point(color = "blue", size = 2)+
+  geom_label_repel(aes(label = Player),
+                 box.padding   = 0.35, 
+                 point.padding = 0.5,
+                 segment.color = 'grey50') +
+  ggtitle("Total Hits by At Bats")+
+  xlab("Total At Bats")+
+  ylab("Hits")
+```
+
+The horizontal axis shows players by ABs and the vertical shows the number of times the player gets on base. We can then use a simple linear model to explore the relationship between a player's at bats and how likely it is that they will get on base. The line on the plot is the linear relationship between ABs and getting on base for the team. If a player is on or near the line, she is performing where she should be. If she's well above, then she is over performing because her at bats are more likely to lead to getting on base. If a player is well below the line, she is under performing and her at bats are less likely to result in getting on base. An over performing player should be batting higher in the order and an under performing player might need to work on increasing batting power and/or plate discipline. 
+
+##Implications
+In our league, we can bat all players (13) for league games, but for competitive tournament we only bat 9, with one designated player who can play on the field bit not bat in the lineup. When batting 9 players, batters who are on the line or above should be on the order, batters who are below should be designated players who play defensively but not in the batting order. 
+
+
+
+#Scoring Runs
+Just as we can use a simple predictive model to show how likely it is that a player's plate will predict getting on base, we can use a predictive model to show how likely it is that a plate appearance will lead to a the batter scoring a run. As with the previous analysis, players who are on or near the line are doing well, players who are well above the line are over performing, and those who are below are under performing. 
+
+
+```{r}
+ggplot(df,aes(x=AB, y=R, label=Player)) +
+  geom_smooth(method = "lm", se = FALSE)+
+  geom_point(color = "blue", size = 2)+
+  geom_label_repel(aes(label = Player),
+                 box.padding   = 0.35, 
+                 point.padding = 0.5,
+                 segment.color = 'grey50') +
+  ggtitle("Runs by At Bats")+
+  xlab("Total At Bats")+
+  ylab("Runs")
+```
+
+#Final thoughts
+I'm not trying to run SABR metrics for the U19 team, mostly I wanted to try some new things in R (plotting names on the with ggrepel), but I will be curious to see if this analysis helps the team in the next tournament.
